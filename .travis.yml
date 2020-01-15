@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t renrobles/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true renrobles/react-test npm test
+
+after_success:
+  - docker build -t renrobles/multi-client ./client
+  - docker build -t renrobles/multi-nginx ./nginx
+  - docker build -t renrobles/multi-server ./server
+  - docker build -t renrobles/multi-worker ./worker
+  # Login to Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take images and push them to Docker Hub
+  - docker push renrobles/multi-client
+  - docker push renrobles/multi-nginx
+  - docker push renrobles/multi-server
+  - docker push renrobles/multi-worker
